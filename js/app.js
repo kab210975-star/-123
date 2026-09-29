@@ -3,16 +3,70 @@ import { bouquetSvg } from "./draw.js";
 import { buildBouquet, formatPrice, orderText } from "./engine.js";
 
 const config = {
-  shopName: "Ателье «Поле»",
+  shopName: "Тюльпановый сад",
   city: "Москва",
-  phone: "+7 (495) 120-45-45",
-  phoneHref: "+74951204545",
+  tagline: "тюльпаны из Москвы",
+  phone: "+7 (495) 000-00-00",
+  phoneHref: "+74950000000",
+  email: "hello@tulpanovy-sad.ru",
+  address: "Москва, ул. Цветочная, 12",
+  hours: "Ежедневно, 8:00–21:00",
+  legalName: "ИП Иванова Мария Сергеевна",
+  inn: "770000000000",
+  deliveryZone: "Москва и до 20 км за МКАД",
   onSubmit: null,
   ...(window.BOUQUET_CONFIG || {})
 };
 
 const STEP_LABELS = ["Повод", "Гамма", "Бюджет", "Состав"];
 const STORAGE_KEY = "ideal-bouquet-v1";
+
+const PRIZES = [
+  {
+    id: "off10",
+    kind: "percent",
+    value: 10,
+    title: "Скидка 10% на этот букет",
+    text: "Назовите код, когда перезвоним — пересчитаем сумму до подтверждения.",
+    code: "POLE10"
+  },
+  {
+    id: "off15",
+    kind: "percent",
+    value: 15,
+    title: "Скидка 15% на этот букет",
+    text: "Редкая сборка. Код действует на эту заявку и сгорает после звонка.",
+    code: "POLE15"
+  },
+  {
+    id: "delivery",
+    kind: "gift",
+    title: "Доставка по городу — в подарок",
+    text: "Если букет повезут курьером, дорогу оплачивает ателье.",
+    code: "POLEGO"
+  },
+  {
+    id: "card",
+    kind: "gift",
+    title: "Открытка каллиграфа",
+    text: "Текст с букета перепишут от руки, отдельно от упаковки.",
+    code: "POLEPEN"
+  },
+  {
+    id: "stems",
+    kind: "gift",
+    title: "Три стебля сверху",
+    text: "Флорист добавит три цветка той же гаммы — сверх состава и сметы.",
+    code: "POLE3"
+  },
+  {
+    id: "ribbon",
+    kind: "gift",
+    title: "Упаковка за счёт ателье",
+    text: "Бумага и лента не войдут в итоговую сумму.",
+    code: "POLERIBBON"
+  }
+];
 
 const state = {
   step: 0,
@@ -26,6 +80,7 @@ const state = {
   cardTouched: false,
   orderOpen: false,
   submitted: false,
+  prize: null,
   form: {
     name: "",
     phone: "",
@@ -125,11 +180,23 @@ function restore() {
   }
 }
 
+function drawPrize() {
+  if (state.occasion === "sympathy") return null;
+  return PRIZES[Math.floor(Math.random() * PRIZES.length)];
+}
+
+function prizePrice(recipe, prize) {
+  if (!recipe || !prize || prize.kind !== "percent") return null;
+  const off = Math.round(recipe.price * prize.value / 100);
+  return { off, next: Math.max(0, recipe.price - off) };
+}
+
 function move(step) {
   state.step = step;
   state.maxStep = Math.max(state.maxStep, step);
   state.orderOpen = false;
   state.submitted = false;
+  state.prize = null;
   persist();
   render();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -205,10 +272,16 @@ function header() {
         <span class="mark">${ICONS.mark}</span>
         <div>
           <p class="brand-name">${esc(config.shopName)}</p>
-          <p class="brand-city">${esc(config.city)}</p>
+          <p class="brand-city">${esc(config.tagline || config.city)}</p>
         </div>
       </div>
-      <a class="phone" href="tel:${esc(config.phoneHref)}">${esc(config.phone)}</a>
+      <div class="contacts">
+        <a class="phone" href="tel:${esc(config.phoneHref)}">${esc(config.phone)}</a>
+        ${config.email ? `<a class="mail" href="mailto:${esc(config.email)}">${esc(config.email)}</a>` : ""}
+        <p>${esc(config.address)}</p>
+        <p>${esc(config.hours)}</p>
+        ${config.legalName ? `<p class="legal">${esc(config.legalName)}${config.inn ? ` · ИНН ${esc(config.inn)}` : ""}</p>` : ""}
+      </div>
     </header>
   `;
 }
@@ -442,12 +515,27 @@ function dialogView() {
   const recipe = currentRecipe();
   if (!recipe) return "";
   if (state.submitted) {
+    const prize = state.prize;
+    const priced = prizePrice(recipe, prize);
+    const prizeBlock = prize
+      ? `
+        <aside class="prize">
+          <p class="kicker">Ваш приз</p>
+          <h3>${esc(prize.title)}</h3>
+          ${priced ? `<p class="prize-price"><s>${formatPrice(recipe.price)}</s> <strong>${formatPrice(priced.next)}</strong></p>` : ""}
+          <p>${esc(prize.text)}</p>
+          <p class="prize-code">${esc(prize.code)}</p>
+        </aside>
+      `
+      : "";
     return `
       <dialog id="order">
         <div class="order success">
-          <p class="kicker">Заявка собрана</p>
-          <h2>Букет «${esc(recipe.name)}» записан</h2>
-          <p>Мы записали заявку для ${esc(config.shopName)}. Текст заказа скопирован — его можно сразу отправить флористу.</p>
+          <p class="kicker">Готово</p>
+          <h2>Заказ принят</h2>
+          <p class="order-lead">Вам перезвонят в течение 15 минут.</p>
+          <p>Букет «${esc(recipe.name)}» записан в ${esc(config.shopName)}. Менеджер подтвердит состав и время.</p>
+          ${prizeBlock}
           <div class="form-actions">
             <button type="button" class="btn btn-ghost" data-action="close-order">Закрыть</button>
             <button type="button" class="btn btn-primary" data-action="copy">Скопировать заявку</button>
@@ -477,6 +565,7 @@ function dialogView() {
           <div class="choice">
             <label><input type="radio" name="delivery" value="pickup" ${state.form.delivery !== "courier" ? "checked" : ""} /> Самовывоз</label>
             <label><input type="radio" name="delivery" value="courier" ${state.form.delivery === "courier" ? "checked" : ""} /> Доставка</label>
+            <p class="delivery-note">${esc(config.deliveryZone)}. Самовывоз: ${esc(config.address)}.</p>
           </div>
           <label data-address ${state.form.delivery === "courier" ? "" : "hidden"}>Адрес доставки
             <input name="address" autocomplete="street-address" value="${esc(state.form.address)}" ${state.form.delivery === "courier" ? "required" : ""} />
@@ -488,7 +577,7 @@ function dialogView() {
         </div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost" data-action="close-order">Отмена</button>
-          <button type="submit" class="btn btn-primary">Отправить заявку</button>
+          <button type="submit" class="btn btn-primary">Оформить заказ</button>
         </div>
       </form>
     </dialog>
@@ -587,6 +676,14 @@ function orderPayload(recipe) {
       address: state.form.delivery === "courier" ? state.form.address.trim() : ""
     },
     card: cardMessage(recipe),
+    prize: state.prize
+      ? {
+          id: state.prize.id,
+          title: state.prize.title,
+          code: state.prize.code,
+          price: prizePrice(recipe, state.prize)?.next ?? recipe.price
+        }
+      : null,
     createdAt: new Date().toISOString()
   };
 }
@@ -600,7 +697,8 @@ function textForCopy() {
     form: {
       ...state.form,
       date: formatDate(state.form.date),
-      card: cardMessage(recipe)
+      card: cardMessage(recipe),
+      prize: state.prize
     }
   });
 }
@@ -643,6 +741,7 @@ async function submitOrder(form) {
     return;
   }
   state.error = "";
+  state.prize = drawPrize();
   const recipe = currentRecipe();
   const payload = orderPayload(recipe);
   try {
@@ -651,6 +750,7 @@ async function submitOrder(form) {
     render();
     await copyOrder();
   } catch {
+    state.prize = null;
     state.error = "Не удалось отправить заявку. Состав можно скопировать и передать флористу вручную.";
     render();
   }
@@ -691,6 +791,7 @@ app.addEventListener("click", (event) => {
     state.maxStep = 0;
     state.cardTouched = false;
     state.form = { name: "", phone: "", date: "", delivery: "pickup", address: "", card: "" };
+    state.prize = null;
     state.error = "";
     move(0);
     return;
@@ -718,6 +819,7 @@ app.addEventListener("click", (event) => {
   if (action === "order") {
     state.orderOpen = true;
     state.submitted = false;
+    state.prize = null;
     state.error = "";
     render();
     return;

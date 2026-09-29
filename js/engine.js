@@ -235,7 +235,7 @@ export function orderText({ config, recipe, form }) {
   const delivery =
     form.delivery === "courier"
       ? `Доставка: ${form.address || "адрес уточнит менеджер"}`
-      : "Самовывоз из ателье";
+      : `Самовывоз: ${config.address || "из магазина"}`;
 
   return [
     `Заказ — ${config.shopName}`,
@@ -254,7 +254,10 @@ export function orderText({ config, recipe, form }) {
     form.name ? `Имя: ${form.name}` : "",
     form.phone ? `Телефон: ${form.phone}` : "",
     form.date ? `Когда нужен: ${form.date}` : "",
-    delivery
+    delivery,
+    form.prize
+      ? `Приз: ${form.prize.title}${form.prize.code ? ` · код ${form.prize.code}` : ""}`
+      : ""
   ]
     .filter((line) => line !== "")
     .join("\n");
