@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f3efe8" />
+    <title>Собери идеальный букет</title>
+    <meta
+      name="description"
+      content="Подберите букет по поводу, цветовой гамме, бюджету и составу. Готовый инструмент для сайта цветочного магазина."
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a2f'/%3E%3Ccircle cx='16' cy='13' r='5' fill='%23e7b4b8'/%3E%3Cpath d='M16 17 v8 M12 22 h8' stroke='%23f3efe8' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,560&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      // Настройки магазина. onSubmit можно заменить на свою отправку заявки.
+      window.BOUQUET_CONFIG = {
+        shopName: "Ателье «Поле»",
+        city: "Москва",
+        phone: "+7 (495) 120-45-45",
+        phoneHref: "+74951204545",
+        onSubmit: null
+      };
+    </script>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

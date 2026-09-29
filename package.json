@@ -1,0 +1,6 @@
+{
+  "name": "ideal-bouquet",
+  "private": true,
+  "type": "module",
+  "description": "Интерактивный подбор букета для сайта цветочного магазина"
+}
